@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理页面验证 - PPT 实时反馈系统</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .svg-icon { display: inline-flex; align-items: center; justify-content: center; }
+    .svg-icon svg { width: 1em; height: 1em; fill: currentColor; }
+    .form-card-icon .svg-icon svg { width: 30px; height: 30px; }
+    .btn-secondary .svg-icon svg { width: 14px; height: 14px; }
+  </style>
+</head>
+<body>
+  <div class="dark-page">
+    <div class="form-card">
+      <div class="form-card-icon" style="background:linear-gradient(135deg,#f39c12,#e74c3c);">
+        <span class="svg-icon" style="color:#fff"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/></svg></span>
+      </div>
+      <h1 class="form-card-title">管理页面验证</h1>
+      <p class="form-card-subtitle">请输入管理员密码以访问后台</p>
+
+      <div class="form-input-group">
+        <input type="password" id="passwordInput" class="form-input"
+          placeholder="请输入管理员密码">
+      </div>
+
+      <button id="btnVerify" class="btn-primary" onclick="verify()">
+        验证
+      </button>
+
+      <p id="errorMsg" class="form-error"></p>
+
+      <button class="btn-secondary" onclick="window.location.href='/'">
+        <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="currentColor"/></svg></span>
+        返回首页
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const passwordInput = document.getElementById('passwordInput');
+    const errorMsg = document.getElementById('errorMsg');
+
+    passwordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') verify();
+    });
+
+    passwordInput.addEventListener('input', () => {
+      errorMsg.classList.remove('show');
+    });
+
+    async function verify() {
+      const password = passwordInput.value.trim();
+      if (!password) {
+        showError('请输入密码');
+        return;
+      }
+
+      const btn = document.getElementById('btnVerify');
+      btn.disabled = true;
+      btn.textContent = '验证中...';
+
+      try {
+        const res = await fetch('/api/auth/admin/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const data = await res.json();
+
+        if (data.code === 200) {
+          localStorage.setItem('admin_token', data.data.token);
+          window.location.href = data.data.redirect_url;
+        } else {
+          showError(data.message || '验证失败');
+          passwordInput.value = '';
+          passwordInput.focus();
+        }
+      } catch (err) {
+        showError('网络错误，请重试');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '验证';
+      }
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.add('show');
+    }
+  </script>
+</body>
+</html>

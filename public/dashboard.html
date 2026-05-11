@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>课堂反馈智慧看板</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    .svg-icon { display: inline-flex; align-items: center; justify-content: center; }
+    .svg-icon svg { width: 1em; height: 1em; fill: currentColor; }
+    .dashboard-nav-title .svg-icon svg { width: 22px; height: 22px; }
+    .chart-card-header .icon { font-size: 0; }
+    .chart-card-header .icon .svg-icon svg { width: 20px; height: 20px; }
+    .messages-header-left .icon { font-size: 0; }
+    .messages-header-left .icon .svg-icon svg { width: 20px; height: 20px; }
+    .message-icon .svg-icon svg { width: 16px; height: 16px; }
+    .btn-create .svg-icon svg { width: 16px; height: 16px; }
+    .btn-copy .svg-icon svg { width: 14px; height: 14px; }
+    .fab-top .svg-icon svg { width: 20px; height: 20px; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-page">
+    <!-- Navigation Bar -->
+    <nav class="dashboard-nav">
+      <div class="dashboard-nav-title">
+        <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z" fill="currentColor"/></svg></span>
+        课堂反馈智慧看板
+      </div>
+
+      <div class="dashboard-nav-center">
+        <div class="classroom-code-box">
+          <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" fill="currentColor"/></svg></span>
+          <span>教室码</span>
+          <span class="code" id="navClassroomCode">263178</span>
+          <button class="btn-copy" onclick="copyCode()">
+            <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" fill="currentColor"/></svg></span>
+            复制
+          </button>
+        </div>
+        <div id="navStatus" class="status-badge connected">
+          <span class="dot"></span>
+          <span>已连接</span>
+        </div>
+      </div>
+
+      <button class="btn-create" onclick="createClassroom()">
+        <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg></span>
+        创建新课堂
+      </button>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="dashboard-content">
+      <!-- Statistics Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="number" id="statConfusion">0</div>
+          <div class="label">累计困惑</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" id="statStudents">0</div>
+          <div class="label">参与学生</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" id="statBarrage">0</div>
+          <div class="label">弹幕数量</div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="charts-row">
+        <!-- Confusion Heatmap -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <span class="icon"><span class="svg-icon" style="color:#e74c3c"><svg viewBox="0 0 24 24"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" fill="currentColor"/></svg></span></span>
+            <span class="title">困惑热力图</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="heatmapChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Interaction Analysis -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <span class="icon"><span class="svg-icon" style="color:var(--purple)"><svg viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z" fill="currentColor"/></svg></span></span>
+            <span class="title">互动分析</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="interactionChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-time Messages -->
+      <div class="messages-section">
+        <div class="messages-header">
+          <div class="messages-header-left">
+            <span class="icon"><span class="svg-icon" style="color:var(--blue)"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" fill="currentColor"/></svg></span></span>
+            <span class="title">实时消息</span>
+          </div>
+        </div>
+
+        <div id="messagesList" class="messages-list">
+          <div class="messages-empty">暂无消息，等待学生互动...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Bubble -->
+    <div id="notifBubble" class="notif-bubble">
+      <div class="avatar" id="notifAvatar">萨</div>
+      <div class="text">
+        <div><span class="name" id="notifName">-</span> <span id="notifContent">-</span></div>
+        <div class="time" id="notifTime">-</div>
+      </div>
+    </div>
+
+    <!-- Floating Top Button -->
+    <button class="fab-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+      <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" fill="currentColor"/></svg></span>
+    </button>
+  </div>
+
+  <script>
+    let ws = null;
+    let currentClassroomCode = localStorage.getItem('classroomCode') || '263178';
+    let stats = { totalConfusion: 0, totalBarrage: 0, studentCount: 0 };
+    let messages = [];
+    let confusionData = [];
+    let barrageData = [];
+    let timeLabels = [];
+
+    let heatmapChart = null;
+    let interactionChart = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('navClassroomCode').textContent = currentClassroomCode;
+      initCharts();
+      loadClassroomData();
+      connectWebSocket();
+    });
+
+    function initCharts() {
+      var heatmapCtx = document.getElementById('heatmapChart').getContext('2d');
+      heatmapChart = new Chart(heatmapCtx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: '困惑次数',
+            data: [],
+            borderColor: '#e74c3c',
+            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#e74c3c',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            pointHoverRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: function(items) { return '时间: ' + items[0].label; },
+                label: function(item) { return '困惑次数: ' + item.raw; }
+              }
+            }
+          },
+          scales: {
+            x: { title: { display: true, text: '时间' }, grid: { display: false } },
+            y: { title: { display: true, text: '困惑次数' }, beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+
+      var interactionCtx = document.getElementById('interactionChart').getContext('2d');
+      interactionChart = new Chart(interactionCtx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: '困惑',
+              data: [],
+              backgroundColor: 'rgba(231, 76, 60, 0.8)',
+              borderColor: '#e74c3c',
+              borderWidth: 1,
+              borderRadius: 4
+            },
+            {
+              label: '弹幕',
+              data: [],
+              backgroundColor: 'rgba(74, 144, 217, 0.8)',
+              borderColor: '#4a90d9',
+              borderWidth: 1,
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { usePointStyle: true, pointStyle: 'circle', padding: 20 }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              callbacks: {
+                title: function(items) { return '时间: ' + items[0].label; },
+                label: function(item) { return item.dataset.label + ': ' + item.raw; }
+              }
+            }
+          },
+          scales: {
+            x: { title: { display: true, text: '时间' }, grid: { display: false } },
+            y: { title: { display: true, text: '数量' }, beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+    }
+
+    async function loadClassroomData() {
+      try {
+        var res = await fetch('/api/classroom/' + currentClassroomCode + '/messages');
+        var data = await res.json();
+        if (data.code === 200) {
+          stats = data.data.stats;
+          updateStats();
+          data.data.messages.forEach(function(msg) {
+            addMessageToList(msg, false);
+            if (msg.type === 'confusion' || msg.type === 'barrage') {
+              addToChartData(msg);
+            }
+          });
+          updateCharts();
+        }
+      } catch (err) {
+        console.error('Failed to load data:', err);
+      }
+    }
+
+    function connectWebSocket() {
+      var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(protocol + '//' + location.host);
+
+      ws.onopen = function() {
+        ws.send(JSON.stringify({
+          type: 'join',
+          classroomCode: currentClassroomCode,
+          nickname: '教师端'
+        }));
+        updateConnectionStatus(true);
+      };
+
+      ws.onmessage = function(event) {
+        handleWSMessage(JSON.parse(event.data));
+      };
+
+      ws.onclose = function() {
+        updateConnectionStatus(false);
+        setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onerror = function() {
+        updateConnectionStatus(false);
+      };
+    }
+
+    function handleWSMessage(data) {
+      switch (data.type) {
+        case 'joined':
+          break;
+        case 'new_message':
+          addMessageToList(data.message, true);
+          addToChartData(data.message);
+          updateCharts();
+          if (data.stats) {
+            stats = data.stats;
+            updateStats();
+          }
+          showNotification(data.message);
+          break;
+        case 'student_joined':
+          if (data.studentCount) {
+            stats.studentCount = data.studentCount;
+            updateStats();
+          }
+          break;
+        case 'hand_raised':
+          showNotification({
+            type: 'hand_raise',
+            nickname: data.nickname,
+            content: '举手了',
+            timestamp: data.handRaise.timestamp
+          });
+          break;
+      }
+    }
+
+    function addMessageToList(msg, scroll) {
+      var list = document.getElementById('messagesList');
+      var empty = list.querySelector('.messages-empty');
+      if (empty) empty.remove();
+
+      var item = document.createElement('div');
+      item.className = 'message-item ' + msg.type;
+      item.title = msg.nickname + ' - ' + msg.timestamp;
+
+      var iconSvg = msg.type === 'confusion'
+        ? '<span class="svg-icon" style="color:#e74c3c"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" fill="currentColor"/></svg></span>'
+        : '<span class="svg-icon" style="color:#4a90d9"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" fill="currentColor"/></svg></span>';
+
+      var typeLabel = msg.type === 'confusion' ? '困惑' : '弹幕';
+
+      item.innerHTML = '<span class="message-time">' + msg.timestamp + '</span>' +
+        '<span class="message-icon">' + iconSvg + '</span>' +
+        '<span class="message-content"><span class="nickname">' + msg.nickname + '</span>' + typeLabel + '：' + msg.content + '</span>';
+
+      list.insertBefore(item, list.firstChild);
+      while (list.children.length > 50) {
+        list.removeChild(list.lastChild);
+      }
+      if (scroll) list.scrollTop = 0;
+    }
+
+    function addDivider() {
+      var list = document.getElementById('messagesList');
+      var divider = document.createElement('div');
+      divider.style.cssText = 'border-top:2px dashed #ddd; margin:12px 0; position:relative;';
+      divider.innerHTML = '<span style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#fff;padding:0 8px;font-size:11px;color:#aaa;">' +
+        new Date().toLocaleTimeString('zh-CN', {hour12:false}) + '</span>';
+      list.insertBefore(divider, list.firstChild);
+    }
+
+    function addToChartData(msg) {
+      var time = msg.timestamp.substring(0, 5);
+      var idx = timeLabels.indexOf(time);
+      if (idx === -1) {
+        timeLabels.push(time);
+        confusionData.push(0);
+        barrageData.push(0);
+        idx = timeLabels.length - 1;
+      }
+      if (msg.type === 'confusion') {
+        confusionData[idx]++;
+      } else if (msg.type === 'barrage') {
+        barrageData[idx]++;
+      }
+      if (timeLabels.length > 10) {
+        timeLabels.shift();
+        confusionData.shift();
+        barrageData.shift();
+      }
+    }
+
+    function updateCharts() {
+      heatmapChart.data.labels = timeLabels.slice();
+      heatmapChart.data.datasets[0].data = confusionData.slice();
+      heatmapChart.update('none');
+
+      interactionChart.data.labels = timeLabels.slice();
+      interactionChart.data.datasets[0].data = confusionData.slice();
+      interactionChart.data.datasets[1].data = barrageData.slice();
+      interactionChart.update('none');
+    }
+
+    function updateStats() {
+      document.getElementById('statConfusion').textContent = stats.totalConfusion;
+      document.getElementById('statStudents').textContent = stats.studentCount;
+      document.getElementById('statBarrage').textContent = stats.totalBarrage;
+    }
+
+    function updateConnectionStatus(connected) {
+      var navStatus = document.getElementById('navStatus');
+      if (connected) {
+        navStatus.className = 'status-badge connected';
+        navStatus.innerHTML = '<span class="dot"></span><span>已连接</span>';
+      } else {
+        navStatus.className = 'status-badge disconnected';
+        navStatus.innerHTML = '<span class="dot"></span><span>未连接</span>';
+      }
+    }
+
+    function showNotification(msg) {
+      var bubble = document.getElementById('notifBubble');
+      var avatar = document.getElementById('notifAvatar');
+      var name = document.getElementById('notifName');
+      var content = document.getElementById('notifContent');
+      var time = document.getElementById('notifTime');
+
+      var nameStr = msg.nickname || '匿名';
+      avatar.textContent = nameStr.charAt(0);
+      name.textContent = nameStr;
+
+      if (msg.type === 'confusion') {
+        content.textContent = '困惑：' + msg.content;
+      } else if (msg.type === 'barrage') {
+        content.textContent = msg.content;
+      } else if (msg.type === 'hand_raise') {
+        content.textContent = '举手了';
+      }
+      time.textContent = msg.timestamp;
+
+      bubble.classList.add('show');
+      clearTimeout(bubble._timer);
+      bubble._timer = setTimeout(function() {
+        bubble.classList.remove('show');
+      }, 5000);
+    }
+
+    function copyCode() {
+      navigator.clipboard.writeText(currentClassroomCode).then(function() {
+        var btn = document.querySelector('.btn-copy');
+        var original = btn.innerHTML;
+        btn.innerHTML = '<span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/></svg></span> 已复制';
+        setTimeout(function() { btn.innerHTML = original; }, 2000);
+      }).catch(function() {
+        var input = document.createElement('input');
+        input.value = currentClassroomCode;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      });
+    }
+
+    async function createClassroom() {
+      var name = prompt('请输入课堂名称：');
+      if (!name) return;
+      try {
+        var res = await fetch('/api/classroom/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name })
+        });
+        var data = await res.json();
+        if (data.code === 200) {
+          currentClassroomCode = data.data.classroomCode;
+          localStorage.setItem('classroomCode', currentClassroomCode);
+          document.getElementById('navClassroomCode').textContent = currentClassroomCode;
+          stats = { totalConfusion: 0, totalBarrage: 0, studentCount: 0 };
+          messages = [];
+          confusionData = [];
+          barrageData = [];
+          timeLabels = [];
+          updateStats();
+          updateCharts();
+          document.getElementById('messagesList').innerHTML = '<div class="messages-empty">暂无消息，等待学生互动...</div>';
+          if (ws) ws.close();
+          connectWebSocket();
+          alert('课堂已创建！\n课堂名称：' + name + '\n教室码：' + currentClassroomCode + '\n\n请将教室码分享给学生。');
+        }
+      } catch (err) {
+        alert('创建失败，请重试');
+      }
+    }
+  </script>
+</body>
+</html>

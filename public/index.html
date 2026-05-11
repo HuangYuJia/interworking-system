@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PPT 实时反馈系统</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    .svg-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .svg-icon svg {
+      width: 1em;
+      height: 1em;
+      fill: currentColor;
+    }
+    .entry-card-icon .svg-icon svg {
+      width: 36px;
+      height: 36px;
+    }
+    .entry-logo-icon .svg-icon svg {
+      width: 28px;
+      height: 28px;
+    }
+    .entry-card-btn .svg-icon svg,
+    .entry-card-qr .svg-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+    .qr-wrapper {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .qr-wrapper canvas {
+      border-radius: 8px;
+    }
+    .qr-url {
+      font-size: 11px;
+      color: #999;
+      margin-top: 6px;
+      word-break: break-all;
+      text-align: center;
+      max-width: 180px;
+    }
+  </style>
+</head>
+<body>
+  <div class="entry-page">
+    <div class="entry-header">
+      <div class="entry-logo">
+        <div class="entry-logo-icon">
+          <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" style="display:none"/><circle cx="12" cy="12" r="10" fill="none" stroke="#e67e22" stroke-width="2"/><circle cx="12" cy="12" r="6" fill="none" stroke="#e67e22" stroke-width="2"/><circle cx="12" cy="12" r="2" fill="#e67e22"/><line x1="12" y1="2" x2="12" y2="6" stroke="#e67e22" stroke-width="2"/><line x1="12" y1="18" x2="12" y2="22" stroke="#e67e22" stroke-width="2"/><line x1="2" y1="12" x2="6" y2="12" stroke="#e67e22" stroke-width="2"/><line x1="18" y1="12" x2="22" y2="12" stroke="#e67e22" stroke-width="2"/></svg></span>
+        </div>
+        <h1 class="entry-title">PPT 实时反馈系统</h1>
+      </div>
+      <p class="entry-subtitle">扫码参与反馈，让演讲更精彩</p>
+    </div>
+
+    <div class="entry-cards">
+      <!-- Join Speech Card -->
+      <div class="entry-card">
+        <div class="entry-card-icon purple">
+          <span class="svg-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="18" x2="12" y2="18.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8" y="4" width="8" height="12" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.3"/></svg></span>
+        </div>
+        <h2 class="entry-card-title">加入演讲</h2>
+        <p class="entry-card-desc">通过识别码或扫码加入正在进行的演讲</p>
+        <a href="/join.html" class="entry-card-btn purple">
+          <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/></svg></span>
+          加入演讲
+        </a>
+        <div class="entry-card-qr">
+          <div class="qr-label">
+            <span class="svg-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="18" x2="12" y2="18.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+            手机扫码加入
+          </div>
+          <div id="qr-join" class="qr-wrapper"></div>
+        </div>
+      </div>
+
+      <!-- Admin Card -->
+      <div class="entry-card">
+        <div class="entry-card-icon gray">
+          <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/></svg></span>
+        </div>
+        <h2 class="entry-card-title">后台管理</h2>
+        <p class="entry-card-desc">管理所有演讲会话，查看反馈数据和报告</p>
+        <a href="/admin-login.html" class="entry-card-btn white">
+          <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z" fill="currentColor"/></svg></span>
+          进入后台
+        </a>
+        <div class="entry-card-qr">
+          <div class="qr-label">
+            <span class="svg-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="18" x2="12" y2="18.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+            手机扫码管理
+          </div>
+          <div id="qr-admin" class="qr-wrapper"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Generate real QR codes
+    function generateQR(containerId, url) {
+      var container = document.getElementById(containerId);
+      if (!container) {
+        console.error('Container not found:', containerId);
+        return;
+      }
+
+      // Clear existing content
+      container.innerHTML = '';
+
+      try {
+        new QRCode(container, {
+          text: url,
+          width: 150,
+          height: 150,
+          colorDark: '#2c3e50',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch (error) {
+        console.error('QR generation error:', error);
+        container.innerHTML = '<p style="color:red;font-size:12px;">QR生成失败</p>';
+      }
+    }
+
+    // Get the server's base URL (accessible from mobile on same network)
+    var baseUrl = 'http://10.11.147.51:3000';
+
+    // Generate QR codes for mobile access
+    generateQR('qr-join', baseUrl + '/student.html');
+    generateQR('qr-admin', baseUrl + '/dashboard.html');
+  </script>
+</body>
+</html>

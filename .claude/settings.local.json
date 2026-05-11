@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/XGSDK/KSCC截图//**)",
+      "Read(//d/XGSDK/KSCC截图/**)",
+      "Bash(npm install:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(TaskStop bpuing2wh:*)",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(ipconfig:*)",
+      "Bash(ip addr:*)",
+      "Bash(netsh advfirewall:*)",
+      "Bash(gh auth:*)"
+    ]
+  }
+}

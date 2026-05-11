@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>课堂互动 - PPT 实时反馈系统</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .svg-icon { display: inline-flex; align-items: center; justify-content: center; }
+    .svg-icon svg { width: 1em; height: 1em; fill: currentColor; }
+
+    body { background: #1e0a3c; }
+
+    .student-page {
+      min-height: 100vh;
+      background: #1e0a3c;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .student-main {
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px 24px;
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .student-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .student-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .student-title .svg-icon svg { width: 28px; height: 28px; }
+
+    .student-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    .student-status.connected {
+      background: rgba(39, 174, 96, 0.15);
+      color: #27ae60;
+    }
+    .student-status.disconnected {
+      background: rgba(231, 76, 60, 0.12);
+      color: #e74c3c;
+    }
+    .student-status .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .student-slogan {
+      font-size: 14px;
+      color: #999;
+    }
+
+    .student-card {
+      background: #f7f8fa;
+      border: 1px solid #eee;
+      border-radius: 14px;
+      padding: 16px 20px;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .student-info-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+    }
+    .student-info-row:not(:last-child) {
+      border-bottom: 1px solid #eee;
+    }
+
+    .student-info-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eef0f5;
+    }
+    .student-info-icon .svg-icon svg { width: 20px; height: 20px; }
+
+    .student-info-content {
+      flex: 1;
+    }
+    .student-info-label {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 2px;
+    }
+    .student-info-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .student-actions {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .btn-connect {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #4a90d9, #6c3fa0);
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-connect:hover {
+      box-shadow: 0 4px 20px rgba(74, 144, 217, 0.4);
+      transform: translateY(-2px);
+    }
+    .btn-connect:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-connect .svg-icon svg { width: 18px; height: 18px; }
+
+    .btn-hand {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #e74c3c, #ff6b81);
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-hand:hover {
+      box-shadow: 0 4px 20px rgba(231, 76, 60, 0.4);
+      transform: translateY(-2px);
+    }
+    .btn-hand:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-hand .svg-icon svg { width: 18px; height: 18px; }
+
+    .barrage-section {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .barrage-input-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .barrage-input {
+      flex: 1;
+      padding: 12px 18px;
+      border: 2px solid #e8ecf0;
+      border-radius: 30px;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.3s;
+      background: #f7f8fa;
+      color: #2c3e50;
+    }
+    .barrage-input::placeholder {
+      color: #bbb;
+    }
+    .barrage-input:focus {
+      border-color: #4a90d9;
+      background: #fff;
+    }
+    .barrage-input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-send {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #74b9ff, #4a90d9);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .btn-send:hover {
+      box-shadow: 0 4px 15px rgba(74, 144, 217, 0.4);
+      transform: translateY(-2px);
+    }
+    .btn-send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-send .svg-icon svg { width: 20px; height: 20px; }
+
+    .student-bottom {
+      margin-top: auto;
+      padding-top: 20px;
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: #bbb;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 20px;
+      padding: 32px 28px;
+      width: 90%;
+      max-width: 400px;
+      transform: translateY(20px);
+      transition: transform 0.3s;
+    }
+    .modal-overlay.show .modal {
+      transform: translateY(0);
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #2c3e50;
+    }
+    .modal-title .svg-icon svg { width: 24px; height: 24px; }
+
+    .modal-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e8ecf0;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.3s;
+      margin-bottom: 16px;
+    }
+    .modal-input:focus {
+      border-color: #6c3fa0;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 8px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-btn-cancel {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      background: #fff;
+      color: #2c3e50;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .modal-btn-cancel:hover {
+      border-color: #aaa;
+    }
+
+    .modal-btn-submit {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #4a90d9, #6c3fa0);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .modal-btn-submit:hover {
+      box-shadow: 0 4px 15px rgba(74, 144, 217, 0.3);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 24px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      z-index: 2000;
+      transition: transform 0.3s ease;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 90%;
+      color: #2c3e50;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.success { border-left: 4px solid #27ae60; }
+    .toast.error { border-left: 4px solid #e74c3c; }
+    .toast.info { border-left: 4px solid #4a90d9; }
+  </style>
+</head>
+<body>
+  <div class="student-page">
+    <div class="student-main">
+      <!-- Header -->
+      <div class="student-header">
+        <h1 class="student-title">
+          <span class="svg-icon" style="color:#f39c12"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" fill="currentColor"/></svg></span>
+          课堂互动
+        </h1>
+        <div id="statusBadge" class="student-status disconnected">
+          <span class="dot"></span>
+          <span id="statusText">未连接</span>
+        </div>
+        <p class="student-slogan">随时提问 · 让老师听见你的声音</p>
+      </div>
+
+      <!-- Info Card -->
+      <div class="student-card">
+        <div class="student-info-row">
+          <div class="student-info-icon">
+            <span class="svg-icon" style="color:#f39c12"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/></svg></span>
+          </div>
+          <div class="student-info-content">
+            <div class="student-info-label">教室码</div>
+            <div class="student-info-value" id="classroomCode">-</div>
+          </div>
+        </div>
+        <div class="student-info-row">
+          <div class="student-info-icon">
+            <span class="svg-icon" style="color:#6c3fa0"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/></svg></span>
+          </div>
+          <div class="student-info-content">
+            <div class="student-info-label">昵称</div>
+            <div class="student-info-value" id="nicknameDisplay">同学</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="student-actions">
+        <button id="btnConnect" class="btn-connect" onclick="connectClassroom()">
+          <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z" fill="currentColor"/></svg></span>
+          连接教室
+        </button>
+        <button id="btnHand" class="btn-hand" onclick="raiseHand()" disabled>
+          <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M23 8c0 1.1-.9 2-2 2-.18 0-.35-.02-.51-.07l-3.56 3.55c.05.16.07.34.07.52 0 1.1-.9 2-2 2s-2-.9-2-2c0-.18.02-.36.07-.52l-2.55-2.55c-.16.05-.34.07-.52.07s-.36-.02-.52-.07l-4.55 4.56c.05.16.07.33.07.51 0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2c.18 0 .35.02.51.07l4.56-4.55C8.02 9.36 8 9.18 8 9c0-1.1.9-2 2-2s2 .9 2 2c0 .18-.02.36-.07.52l2.55 2.55c.16-.05.34-.07.52-.07s.36.02.52.07l3.55-3.56C19.02 8.35 19 8.18 19 8c0-1.1.9-2 2-2s2 .9 2 2z" fill="currentColor"/></svg></span>
+          没听懂 · 举手
+        </button>
+      </div>
+
+      <!-- Barrage Input -->
+      <div class="barrage-section">
+        <div class="barrage-input-group">
+          <input type="text" id="barrageInput" class="barrage-input"
+            placeholder="发送弹幕..." disabled>
+          <button id="btnSend" class="btn-send" onclick="sendBarrage()" disabled>
+            <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/></svg></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Info -->
+      <div class="student-bottom">
+        <span>匿名反馈</span>
+        <span>|</span>
+        <span>实时同步</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Join Modal -->
+  <div id="joinModal" class="modal-overlay">
+    <div class="modal">
+      <h2 class="modal-title">
+        <span class="svg-icon" style="color:#4a90d9"><svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z" fill="currentColor"/></svg></span>
+        连接教室
+      </h2>
+      <div class="form-group">
+        <label>教室码</label>
+        <input type="text" id="joinCodeInput" class="modal-input" placeholder="请输入教室码">
+      </div>
+      <div class="form-group">
+        <label>昵称</label>
+        <input type="text" id="joinNicknameInput" class="modal-input" placeholder="请输入昵称" value="同学">
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn-cancel" onclick="closeJoinModal()">取消</button>
+        <button class="modal-btn-submit" onclick="submitJoin()">连接</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confusion Modal -->
+  <div id="confusionModal" class="modal-overlay">
+    <div class="modal">
+      <h2 class="modal-title">
+        <span class="svg-icon" style="color:#6c3fa0"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" fill="currentColor"/></svg></span>
+        你的困惑
+      </h2>
+      <input type="text" id="confusionInput" class="modal-input"
+        placeholder="选填：简单描述你的问题">
+      <div class="modal-actions">
+        <button class="modal-btn-cancel" onclick="closeConfusionModal()">取消</button>
+        <button class="modal-btn-submit" onclick="sendConfusion()">发送困惑</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    let ws = null;
+    let connected = false;
+    let classroomCode = '';
+    let nickname = '同学';
+
+    const statusBadge = document.getElementById('statusBadge');
+    const statusText = document.getElementById('statusText');
+    const classroomCodeEl = document.getElementById('classroomCode');
+    const nicknameDisplay = document.getElementById('nicknameDisplay');
+    const btnConnect = document.getElementById('btnConnect');
+    const btnHand = document.getElementById('btnHand');
+    const barrageInput = document.getElementById('barrageInput');
+    const btnSend = document.getElementById('btnSend');
+
+    const params = new URLSearchParams(window.location.search);
+    const urlCode = params.get('code');
+    if (urlCode) {
+      classroomCode = urlCode;
+      classroomCodeEl.textContent = urlCode;
+    }
+
+    // Show join modal if no code in URL
+    if (!classroomCode) {
+      document.getElementById('joinModal').classList.add('show');
+      document.getElementById('joinCodeInput').focus();
+    }
+
+    barrageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendBarrage();
+    });
+
+    document.getElementById('joinCodeInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitJoin();
+    });
+    document.getElementById('joinNicknameInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitJoin();
+    });
+
+    function closeJoinModal() {
+      document.getElementById('joinModal').classList.remove('show');
+    }
+
+    function submitJoin() {
+      const code = document.getElementById('joinCodeInput').value.trim();
+      const nick = document.getElementById('joinNicknameInput').value.trim() || '同学';
+      if (!code) {
+        showToast('请输入教室码', 'error');
+        return;
+      }
+      classroomCode = code;
+      nickname = nick;
+      classroomCodeEl.textContent = code;
+      nicknameDisplay.textContent = nick;
+      closeJoinModal();
+
+      // Close existing connection if any
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      connected = false;
+
+      btnConnect.disabled = true;
+      btnConnect.innerHTML = '连接中...';
+
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${location.host}`);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          type: 'join',
+          classroomCode: classroomCode,
+          nickname: nickname
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleWSMessage(data);
+      };
+
+      ws.onclose = () => {
+        if (connected) {
+          setDisconnected();
+          showToast('连接已断开', 'error');
+        }
+      };
+
+      ws.onerror = () => {
+        btnConnect.disabled = false;
+        btnConnect.innerHTML = '<span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z" fill="currentColor"/></svg></span> 连接教室';
+        showToast('连接失败，请重试', 'error');
+      };
+    }
+
+    function connectClassroom() {
+      if (connected) return;
+
+      // Always show modal when not connected, so user can review/edit
+      document.getElementById('joinCodeInput').value = classroomCode;
+      document.getElementById('joinNicknameInput').value = nickname;
+      document.getElementById('joinModal').classList.add('show');
+      if (!classroomCode) {
+        document.getElementById('joinCodeInput').focus();
+      }
+    }
+
+    function handleWSMessage(data) {
+      switch (data.type) {
+        case 'joined':
+          connected = true;
+          setConnected();
+          showToast('已成功连接课堂', 'success');
+          break;
+        case 'error':
+          btnConnect.disabled = false;
+          btnConnect.innerHTML = '<span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z" fill="currentColor"/></svg></span> 连接教室';
+          showToast(data.message, 'error');
+          break;
+        case 'new_message':
+          if (data.message.type === 'confusion') {
+            showToast('困惑: ' + data.message.content, 'info');
+          }
+          break;
+        case 'hand_raised':
+          if (data.nickname !== nickname) {
+            showToast(data.nickname + ' 举手了', 'info');
+          }
+          break;
+        case 'student_joined':
+          if (data.nickname !== nickname) {
+            showToast(data.nickname + ' 加入了课堂', 'info');
+          }
+          break;
+      }
+    }
+
+    function setConnected() {
+      statusBadge.className = 'student-status connected';
+      statusText.textContent = '已连接';
+      btnConnect.disabled = true;
+      btnConnect.innerHTML = '<span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/></svg></span> 已连接';
+      btnHand.disabled = false;
+      barrageInput.disabled = false;
+      btnSend.disabled = false;
+    }
+
+    function setDisconnected() {
+      connected = false;
+      statusBadge.className = 'student-status disconnected';
+      statusText.textContent = '未连接';
+      btnConnect.disabled = false;
+      btnConnect.innerHTML = '<span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z" fill="currentColor"/></svg></span> 连接教室';
+      btnHand.disabled = true;
+      barrageInput.disabled = true;
+      btnSend.disabled = true;
+    }
+
+    function sendBarrage() {
+      const content = barrageInput.value.trim();
+      if (!content || !connected) return;
+      ws.send(JSON.stringify({ type: 'barrage', content: content }));
+      showToast('弹幕已发送: "' + content + '"', 'success');
+      barrageInput.value = '';
+    }
+
+    function raiseHand() {
+      if (!connected) return;
+      ws.send(JSON.stringify({ type: 'hand_raise' }));
+      document.getElementById('confusionModal').classList.add('show');
+      document.getElementById('confusionInput').focus();
+    }
+
+    function closeConfusionModal() {
+      document.getElementById('confusionModal').classList.remove('show');
+      document.getElementById('confusionInput').value = '';
+    }
+
+    function sendConfusion() {
+      const content = document.getElementById('confusionInput').value.trim();
+      ws.send(JSON.stringify({ type: 'confusion', content: content || '没听懂' }));
+      closeConfusionModal();
+      showToast('困惑反馈已发送', 'success');
+    }
+
+    function showToast(message, type) {
+      type = type || 'info';
+      const toast = document.getElementById('toast');
+      const icons = {
+        success: '<span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/></svg></span>',
+        error: '<span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg></span>',
+        info: '<span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" fill="currentColor"/></svg></span>'
+      };
+      toast.className = 'toast ' + type;
+      toast.innerHTML = (icons[type] || icons.info) + ' ' + message;
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); }, 3000);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>加入演讲 - PPT 实时反馈系统</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .svg-icon { display: inline-flex; align-items: center; justify-content: center; }
+    .svg-icon svg { width: 1em; height: 1em; fill: currentColor; }
+    .form-card-icon .svg-icon svg { width: 30px; height: 30px; }
+    .btn-primary .svg-icon svg { width: 16px; height: 16px; }
+    .btn-secondary .svg-icon svg { width: 14px; height: 14px; }
+  </style>
+</head>
+<body>
+  <div class="dark-page">
+    <div class="form-card">
+      <div class="form-card-icon">
+        <span class="svg-icon" style="color:#fff"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2" fill="currentColor"/><line x1="12" y1="2" x2="12" y2="6" stroke="currentColor" stroke-width="2"/><line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" stroke-width="2"/><line x1="2" y1="12" x2="6" y2="12" stroke="currentColor" stroke-width="2"/><line x1="18" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/></svg></span>
+      </div>
+      <h1 class="form-card-title">加入演讲</h1>
+      <p class="form-card-subtitle">输入识别码或通过链接加入实时反馈</p>
+
+      <div class="form-input-group">
+        <label>输入演讲识别码</label>
+        <input type="text" id="codeInput" class="form-input"
+          placeholder="- - - - - -" maxlength="6"
+          style="text-align:center; font-size:24px; letter-spacing:8px; font-weight:700;">
+      </div>
+
+      <button id="btnQuery" class="btn-primary" onclick="verifyCode()">
+        <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"/></svg></span>
+        查询
+      </button>
+
+      <p id="errorMsg" class="form-error"></p>
+
+      <button class="btn-secondary" onclick="window.location.href='/'">
+        <span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="currentColor"/></svg></span>
+        返回首页
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const codeInput = document.getElementById('codeInput');
+    const errorMsg = document.getElementById('errorMsg');
+
+    codeInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '');
+      errorMsg.classList.remove('show');
+    });
+
+    codeInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') verifyCode();
+    });
+
+    async function verifyCode() {
+      const code = codeInput.value.trim();
+      if (!code) {
+        showError('请输入识别码');
+        return;
+      }
+      if (code.length < 4) {
+        showError('识别码长度不足');
+        return;
+      }
+
+      const btn = document.getElementById('btnQuery');
+      btn.disabled = true;
+      btn.innerHTML = '查询中...';
+
+      try {
+        const res = await fetch('/api/speech/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+
+        if (data.code === 200) {
+          window.location.href = data.data.redirect;
+        } else {
+          showError(data.message || '识别码无效');
+        }
+      } catch (err) {
+        showError('网络错误，请重试');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="svg-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"/></svg></span> 查询';
+      }
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.add('show');
+    }
+  </script>
+</body>
+</html>
